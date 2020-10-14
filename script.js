@@ -1,9 +1,11 @@
 /*
   ** Created with <3 by James Middleton (hello@jamesmiddleton.me)
+  **
+  ** Forked by Puttiong Ander Vidal (pavidal.github.io)
   ** ------------------------------
   ** This script allows Loughborough University students to easily import all lectures as events into a calendar app.
   **
-  ** For instructions and PRs, please visit the GitHub repository (https://github.com/james2mid/timetable-vcs).
+  ** For instructions, issues, and PRs, please visit the GitHub repository (https://github.com/pavidal/timetable-vcs).
 */
 
 // -- CONSTANTS
