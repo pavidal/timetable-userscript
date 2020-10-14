@@ -209,10 +209,10 @@ function main() {
   }, 100)
 }
 
+/** Create a download button */
 function createButton() {
   const parent = $('#my_indv_tab')
 
-  // Create a download button
   const button = $('<div>').attr({
     id: 'get_cal',
     type: 'button',
@@ -228,11 +228,12 @@ function createButton() {
   checkPeriod()
 }
 
+/** Check if whole semesters are selected */
 function checkPeriod() {
   const buttonObj = $('#get_cal')
-
-  // Check if whole semesters are selected
   const selectedPeriod = $('#P2_MY_PERIOD').find('option:selected').text()
+
+  // Hide button if whole semester isn't selected
   selectedPeriod.includes("Semester") ? buttonObj.show() : buttonObj.hide()
 }
 
