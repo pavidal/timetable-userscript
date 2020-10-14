@@ -75,14 +75,19 @@ function getRowDay (row) {
 
     const cells = $(row).children('td').not('.weekday_col').get()
     const rowSessions = cells.reduce((acc, cell) => {
-      if (cell.classList.contains('new_row_tt_info_cell') || cell.classList.contains('tt_info_cell')) {
+        
+      // Added exclusions for on-demand rows
+      if ((cell.classList.contains('new_row_tt_info_cell') || cell.classList.contains('tt_info_cell')) && ($(cell).children('div')[0]).className !== 'tt_content on_demand') {
         // session
+        const rawRoom = $(cell).find('.tt_room_row').first().text().replace('...', '')
+        const room = (rawRoom ? rawRoom : 'Online')
+
         acc.sessions.push({
           moduleId: $(cell).find('.tt_module_id_row').text(),
           moduleName: $(cell).find('.tt_module_name_row').text(),
           type: $(cell).find('.tt_modtype_row').text(),
           lecturerName: $(cell).find('.tt_lect_row').text(),
-          room: $(cell).find('.tt_room_row').first().text().replace('...', ''),
+          room: room,
           buildingName: $($(cell).find('.tt_room_row')[1]).text().replace(/\.\.\.|\(|\)/g, ''),
           day,
           timeOffset: (() => {
@@ -140,13 +145,16 @@ function getRowDay (row) {
     events.push(...session.weeks.map(weekNumber => {
       const startTime = weekStartDates[weekNumber] + (DAY * session.day) + timetableStart + session.timeOffset
 
+      // edited messages
+      const commentLoc = (session.room === 'Online') ? 'online' : `in ${session.room} of ${session.buildingName}`
+
       return {
         UID: `${startTime}-${session.moduleId}`,
         DTSTART: msToVeventDate(startTime),
         DTEND: msToVeventDate(startTime + session.duration),
         SUMMARY: session.type ? `${session.moduleName} (${session.type})` : session.moduleName,
         LOCATION: session.buildingName ? `${session.room} (${session.buildingName})` : session.room,
-        COMMENT: `${session.type} for ${session.moduleName} (${session.moduleId}) with ${session.lecturerName} in room ${session.room} of ${session.buildingName}`
+        COMMENT: `${session.type} for ${session.moduleName} (${session.moduleId}) with ${session.lecturerName} ${commentLoc}.`
       }
     }))
 
@@ -173,7 +181,7 @@ function getRowDay (row) {
   })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.setAttribute('download', 'lectures.vcs')
+  a.setAttribute('download', 'lectures.ics')
   a.setAttribute('href', url)
   document.body.appendChild(a)
 
