@@ -1,10 +1,22 @@
 /*
   ** Created with <3 by James Middleton (hello@jamesmiddleton.me)
+  **
+  ** Forked by Puttiong Ander Vidal (pavidal.github.io)
   ** ------------------------------
   ** This script allows Loughborough University students to easily import all lectures as events into a calendar app.
   **
-  ** For instructions and PRs, please visit the GitHub repository (https://github.com/james2mid/timetable-vcs).
+  ** For instructions, issues, and PRs, please visit the GitHub repository (https://github.com/pavidal/timetable-vcs).
 */
+
+// ==UserScript==
+// @name          Lboro Timetable to Calendar
+// @version       1.0.0
+// @namespace     timetable
+// @description   Easily import your Lboro timetable into your calendar.
+// @license       MIT; https://github.com/pavidal/timetable-vcs/blob/userscript/LICENSE
+// @include       https://lucas.lboro.ac.uk/its_apx/f?p=250*
+// @author        Puttiong Ander Vidal, James Middleton
+// ==/UserScript==
 
 // -- CONSTANTS
 
@@ -21,17 +33,17 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 // -- UTILITY FUNCTIONS
 
 /** Flattens an array by one level. Included for older browser compatibility (and Edge ;) ). */
-function flat (arr) {
+function flat(arr) {
   return [].concat.apply([], arr)
 }
 
 /** Pads a digit with zeroes to return a two-digit string. */
-function padZeroes (s) {
+function padZeroes(s) {
   return String(s).length === 1 ? `0${s}` : s
 }
 
 /** Converts milliseconds to the VCS date format. */
-function msToVeventDate (ms) {
+function msToVeventDate(ms) {
   const date = new Date(ms)
   return `${date.getFullYear()}${padZeroes(date.getUTCMonth() + 1)}${padZeroes(date.getUTCDate())}T${padZeroes(date.getUTCHours())}${padZeroes(date.getUTCMinutes())}${padZeroes(date.getUTCSeconds())}Z`
 }
@@ -39,7 +51,7 @@ function msToVeventDate (ms) {
 // -- FUNCTIONS USED IN MAIN
 
 /** Gets the day of week (zero-based) of the given row. */
-function getRowDay (row) {
+function getRowDay(row) {
   let dayText = null
 
   // sessions whose durations overlap, are placed on adjacent rows
@@ -54,13 +66,13 @@ function getRowDay (row) {
   return DAYS.indexOf(dayText)
 }
 
-(function main () {
+function main() {
   // -- Establish that the correct data is included in the table – prompt to change if not.
   const semester =
     $('#P2_MY_PERIOD').val() === 'sem1' ? 1 :
-    $('#P2_MY_PERIOD').val() === 'sem2' ? 2 :
-    null
-  
+      $('#P2_MY_PERIOD').val() === 'sem2' ? 2 :
+        null
+
   if (!semester) {
     alert('Ensure that the "Period" dropdown box is set as "Semester 1" or "Semester 2"')
     return
@@ -75,7 +87,7 @@ function getRowDay (row) {
 
     const cells = $(row).children('td').not('.weekday_col').get()
     const rowSessions = cells.reduce((acc, cell) => {
-        
+
       // Added exclusions for on-demand rows
       if ((cell.classList.contains('new_row_tt_info_cell') || cell.classList.contains('tt_info_cell')) && ($(cell).children('div')[0]).className !== 'tt_content on_demand') {
         // session
@@ -101,7 +113,7 @@ function getRowDay (row) {
               // a range, e.g '9 - 11' meaning weeks 9, 10 and 11
               ? Array.from(Array(r[2] - r[1])).map((_, i) => +r[1] + i) // expand range
               // not a range, e.g. '6' meaning only week 6
-              : [ +x ]
+              : [+x]
           }))
         })
         acc.gap = 0
@@ -176,7 +188,7 @@ function getRowDay (row) {
   ].join('\r\n')
 
   // -- Download the string as a virtual file.
-  const blob = new Blob([ contents ], {
+  const blob = new Blob([contents], {
     type: 'text/calendar'
   })
   const url = URL.createObjectURL(blob)
@@ -195,4 +207,36 @@ function getRowDay (row) {
       URL.revokeObjectURL(url)
     }, 1000)
   }, 100)
-})()
+}
+
+/** Create a download button */
+function createButton() {
+  const parent = $('#my_indv_tab')
+
+  const button = $('<div>').attr({
+    id: 'get_cal',
+    type: 'button',
+    name: 'Download',
+    style: 'padding:5px; margin:0px 10px 10px 0px; font-weight:600; font-size:115%; background-color:#F26A38; color:white; float:left; cursor:pointer;'
+  })
+
+  parent.prepend(button)
+
+  $('#get_cal').html('Download Calendar')
+  $('#get_cal').on('click', main)
+
+  checkPeriod()
+}
+
+/** Check if whole semesters are selected */
+function checkPeriod() {
+  const buttonObj = $('#get_cal')
+  const selectedPeriod = $('#P2_MY_PERIOD').find('option:selected').text()
+
+  // Hide button if whole semester isn't selected
+  selectedPeriod.includes("Semester") ? buttonObj.show() : buttonObj.hide()
+}
+
+createButton()
+// Watch for timetable changes
+$('#P2_MY_PERIOD').change(checkPeriod)
